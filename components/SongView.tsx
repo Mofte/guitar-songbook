@@ -218,6 +218,7 @@ export default function SongView({ song, chordHtml }: Props) {
         </div>
 
         <MetronomePanel
+          slug={song.slug}
           initialBpm={song.bpm ?? 120}
           initialTimeSig={song.timeSig}
         />

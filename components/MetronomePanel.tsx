@@ -6,6 +6,16 @@ import { Metronome } from "@/lib/metronome";
 type TimeSig = "4/4" | "3/4" | "6/8";
 
 const BEATS: Record<TimeSig, number> = { "4/4": 4, "3/4": 3, "6/8": 6 };
+const STORAGE_PREFIX = "songbook:metronome:";
+
+// Tap Tempo: Mittelwert über bis zu MAX_INTERVALS aufeinanderfolgende Taps;
+// nach TAP_RESET_MS Pause wird die Sequenz verworfen.
+const TAP_RESET_MS = 2000;
+const MAX_INTERVALS = 4;
+
+function clampBpm(n: number): number {
+  return Math.max(20, Math.min(300, Math.round(n)));
+}
 
 function resolveTimeSig(ts: string): TimeSig {
   if (ts === "3/4" || ts === "6/8") return ts;
@@ -13,27 +23,64 @@ function resolveTimeSig(ts: string): TimeSig {
 }
 
 type Props = {
+  slug?: string;
   initialBpm?: number;
   initialTimeSig?: string;
 };
 
 export default function MetronomePanel({
+  slug,
   initialBpm = 120,
   initialTimeSig = "4/4",
 }: Props) {
   const metronomeRef = useRef<Metronome | null>(null);
-  const [bpm, setBpm] = useState(() => Math.max(20, Math.min(300, initialBpm)));
+  const tapTimesRef = useRef<number[]>([]);
+  const [bpm, setBpm] = useState(() => clampBpm(initialBpm));
   const [timeSig, setTimeSig] = useState<TimeSig>(() =>
     resolveTimeSig(initialTimeSig),
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeBeat, setActiveBeat] = useState<number | null>(null);
+  const [tapHint, setTapHint] = useState<string | null>(null);
+  const hydratedRef = useRef(false);
+
+  const storageKey = slug ? `${STORAGE_PREFIX}${slug}` : null;
 
   useEffect(() => {
     const m = new Metronome({ onBeat: (beat) => setActiveBeat(beat) });
     metronomeRef.current = m;
     return () => m.dispose();
   }, []);
+
+  // Hydrate from localStorage. Falls back to props if nothing saved.
+  useEffect(() => {
+    if (!storageKey) {
+      hydratedRef.current = true;
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (typeof data.bpm === "number") setBpm(clampBpm(data.bpm));
+        if (typeof data.timeSig === "string")
+          setTimeSig(resolveTimeSig(data.timeSig));
+      }
+    } catch {
+      // corrupt entry → ignore
+    }
+    hydratedRef.current = true;
+  }, [storageKey]);
+
+  // Persist after hydration to avoid clobbering saved values with defaults.
+  useEffect(() => {
+    if (!storageKey || !hydratedRef.current) return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ bpm, timeSig }));
+    } catch {
+      // quota exceeded etc. → ignore
+    }
+  }, [storageKey, bpm, timeSig]);
 
   useEffect(() => {
     metronomeRef.current?.setBpm(bpm);
@@ -57,7 +104,32 @@ export default function MetronomePanel({
   }, [bpm, timeSig]);
 
   const adjustBpm = (delta: number) =>
-    setBpm((prev) => Math.max(20, Math.min(300, prev + delta)));
+    setBpm((prev) => clampBpm(prev + delta));
+
+  const handleTap = () => {
+    const now = performance.now();
+    const taps = tapTimesRef.current;
+    const last = taps[taps.length - 1];
+
+    if (last !== undefined && now - last > TAP_RESET_MS) {
+      tapTimesRef.current = [now];
+      setTapHint("Tap …");
+      return;
+    }
+
+    taps.push(now);
+    while (taps.length > MAX_INTERVALS + 1) taps.shift();
+
+    if (taps.length >= 2) {
+      const span = taps[taps.length - 1] - taps[0];
+      const avgMs = span / (taps.length - 1);
+      const computed = clampBpm(60000 / avgMs);
+      setBpm(computed);
+      setTapHint(`${taps.length - 1} Tap${taps.length - 1 === 1 ? "" : "s"}`);
+    } else {
+      setTapHint("Tap …");
+    }
+  };
 
   const beatCount = BEATS[timeSig];
 
@@ -106,7 +178,7 @@ export default function MetronomePanel({
             value={bpm}
             onChange={(e) => {
               const v = parseInt(e.target.value, 10);
-              if (Number.isFinite(v)) setBpm(Math.max(20, Math.min(300, v)));
+              if (Number.isFinite(v)) setBpm(clampBpm(v));
             }}
             className="w-14 text-center font-mono text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 text-gray-900 dark:text-white"
             aria-label="BPM"
@@ -130,6 +202,23 @@ export default function MetronomePanel({
           <span className="text-xs text-gray-500 dark:text-gray-400 ml-0.5">
             BPM
           </span>
+        </div>
+
+        {/* Tap Tempo */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleTap}
+            className="px-3 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 text-sm font-semibold"
+            aria-label="Tap Tempo"
+          >
+            Tap
+          </button>
+          {tapHint && (
+            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+              {tapHint}
+            </span>
+          )}
         </div>
 
         {/* Time signature */}
