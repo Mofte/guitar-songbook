@@ -95,6 +95,16 @@ body {
   white-space: pre;
 }
 
+.chord-sheet .chord-interactive {
+  cursor: pointer;
+  border-bottom: 1px dotted transparent;
+  transition: border-color 0.1s;
+}
+
+.chord-sheet .chord-interactive:hover {
+  border-bottom-color: currentColor;
+}
+
 @media print {
   /* Seite: A4, minimale Ränder */
   @page {

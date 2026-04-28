@@ -1,22 +1,31 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { Song } from "@/lib/schema";
 import { transposeChordHtml } from "@/lib/transpose-html";
+import { getChordDiagram } from "@/lib/chords";
+import ChordDiagram from "./ChordDiagram";
 
 type Props = {
   song: Song;
   chordHtml: string;
 };
 
+type Tooltip = {
+  chord: string;
+  x: number;
+  y: number;
+};
+
 const STORAGE_PREFIX = "songbook:settings:";
 
 export default function SongView({ song, chordHtml }: Props) {
   const [transpose, setTranspose] = useState(0);
+  const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   const storageKey = `${STORAGE_PREFIX}${song.slug}`;
 
-  // Load from localStorage on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -30,7 +39,6 @@ export default function SongView({ song, chordHtml }: Props) {
     }
   }, [storageKey]);
 
-  // Persist on change
   useEffect(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify({ transpose }));
@@ -44,12 +52,77 @@ export default function SongView({ song, chordHtml }: Props) {
     [chordHtml, transpose],
   );
 
+  // Attach hover/tap listeners to all .chord divs after each render
+  useEffect(() => {
+    const el = sheetRef.current;
+    if (!el) return;
+
+    const chordDivs = el.querySelectorAll<HTMLDivElement>(".chord");
+    const cleanups: Array<() => void> = [];
+
+    chordDivs.forEach((div) => {
+      const text = div.textContent?.trim() ?? "";
+      if (!text || !getChordDiagram(text)) return;
+
+      div.classList.add("chord-interactive");
+
+      const show = () => {
+        const rect = div.getBoundingClientRect();
+        setTooltip({
+          chord: text,
+          x: rect.left + rect.width / 2,
+          y: rect.bottom + 4,
+        });
+      };
+
+      const hide = () => setTooltip(null);
+
+      const toggle = (e: Event) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = div.getBoundingClientRect();
+        setTooltip((prev) =>
+          prev?.chord === text
+            ? null
+            : {
+                chord: text,
+                x: rect.left + rect.width / 2,
+                y: rect.bottom + 4,
+              },
+        );
+      };
+
+      div.addEventListener("mouseenter", show);
+      div.addEventListener("mouseleave", hide);
+      div.addEventListener("click", toggle);
+
+      cleanups.push(() => {
+        div.classList.remove("chord-interactive");
+        div.removeEventListener("mouseenter", show);
+        div.removeEventListener("mouseleave", hide);
+        div.removeEventListener("click", toggle);
+      });
+    });
+
+    return () => cleanups.forEach((fn) => fn());
+  }, [transposedHtml]);
+
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    if (!tooltip) return;
+    const close = () => setTooltip(null);
+    window.addEventListener("scroll", close, { passive: true });
+    document.addEventListener("click", close);
+    return () => {
+      window.removeEventListener("scroll", close);
+      document.removeEventListener("click", close);
+    };
+  }, [tooltip]);
+
   const transposeLabel =
-    transpose === 0
-      ? "±0"
-      : transpose > 0
-        ? `+${transpose}`
-        : `${transpose}`;
+    transpose === 0 ? "±0" : transpose > 0 ? `+${transpose}` : `${transpose}`;
+
+  const tooltipData = tooltip ? getChordDiagram(tooltip.chord) : null;
 
   return (
     <article className="max-w-3xl mx-auto px-4 py-6">
@@ -145,9 +218,25 @@ export default function SongView({ song, chordHtml }: Props) {
       </header>
 
       <div
+        ref={sheetRef}
         className="chord-sheet"
         dangerouslySetInnerHTML={{ __html: transposedHtml }}
       />
+
+      {tooltip && tooltipData && (
+        <div
+          role="tooltip"
+          className="fixed z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 print:hidden"
+          style={{
+            left: `${tooltip.x}px`,
+            top: `${tooltip.y}px`,
+            transform: "translateX(-50%)",
+            pointerEvents: "none",
+          }}
+        >
+          <ChordDiagram name={tooltip.chord} data={tooltipData} size={110} />
+        </div>
+      )}
     </article>
   );
 }

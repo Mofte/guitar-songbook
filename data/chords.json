@@ -1,1 +1,48 @@
-{}
+{
+  "A":    { "fingers": [[4,2],[3,2],[2,2],[6,"x"]],             "barres": [] },
+  "Am":   { "fingers": [[4,2],[3,2],[2,1],[6,"x"]],             "barres": [] },
+  "Am7":  { "fingers": [[4,2],[2,1],[6,"x"]],                   "barres": [] },
+  "A7":   { "fingers": [[4,2],[2,2],[6,"x"]],                   "barres": [] },
+  "Asus2":{ "fingers": [[4,2],[3,2],[6,"x"]],                   "barres": [] },
+  "Asus4":{ "fingers": [[4,2],[3,2],[2,3],[6,"x"]],             "barres": [] },
+
+  "B":    { "fingers": [[4,3],[3,3],[2,3]],                     "barres": [{"fromString":5,"toString":1,"fret":1}] },
+  "Bm":   { "fingers": [[4,3],[3,3],[2,2]],                     "barres": [{"fromString":5,"toString":1,"fret":1}] },
+  "B7":   { "fingers": [[5,2],[4,1],[3,2],[1,2],[6,"x"]],       "barres": [] },
+
+  "C":    { "fingers": [[5,3],[4,2],[2,1],[6,"x"]],             "barres": [] },
+  "C7":   { "fingers": [[5,3],[4,2],[3,3],[2,1],[6,"x"]],       "barres": [] },
+  "Cadd9":{ "fingers": [[5,3],[4,2],[2,3],[6,"x"]],             "barres": [] },
+  "Cm":   { "fingers": [[4,3],[3,3]],                           "barres": [{"fromString":5,"toString":1,"fret":1}], "position": 3 },
+  "C#":   { "fingers": [[4,3],[3,3],[2,3]],                     "barres": [{"fromString":5,"toString":1,"fret":1}], "position": 4 },
+  "C#m":  { "fingers": [[4,3],[3,3],[2,2]],                     "barres": [{"fromString":5,"toString":1,"fret":1}], "position": 4 },
+
+  "D":    { "fingers": [[3,2],[2,3],[1,2],[6,"x"],[5,"x"]],     "barres": [] },
+  "Dm":   { "fingers": [[3,2],[2,3],[1,1],[6,"x"],[5,"x"]],     "barres": [] },
+  "Dsus2":{ "fingers": [[3,2],[2,3],[6,"x"],[5,"x"]],           "barres": [] },
+  "Dsus4":{ "fingers": [[3,2],[2,3],[1,3],[6,"x"],[5,"x"]],     "barres": [] },
+  "D7":   { "fingers": [[3,2],[2,1],[1,2],[6,"x"],[5,"x"]],     "barres": [] },
+
+  "E":    { "fingers": [[5,2],[4,2],[3,1]],                     "barres": [] },
+  "Em":   { "fingers": [[5,2],[4,2]],                           "barres": [] },
+  "Em7":  { "fingers": [[5,2],[4,2],[2,3]],                     "barres": [] },
+  "E7":   { "fingers": [[5,2],[3,1]],                           "barres": [] },
+  "Eb":   { "fingers": [[4,3],[3,3],[2,3]],                     "barres": [{"fromString":5,"toString":1,"fret":1}], "position": 6 },
+  "Ebm":  { "fingers": [[4,3],[3,3],[2,2]],                     "barres": [{"fromString":5,"toString":1,"fret":1}], "position": 6 },
+
+  "F":    { "fingers": [[5,3],[4,3],[3,2]],                     "barres": [{"fromString":6,"toString":1,"fret":1}] },
+  "Fm":   { "fingers": [[5,3],[4,3]],                           "barres": [{"fromString":6,"toString":1,"fret":1}] },
+  "F#":   { "fingers": [[5,3],[4,3],[3,2]],                     "barres": [{"fromString":6,"toString":1,"fret":1}], "position": 2 },
+  "F#m":  { "fingers": [[5,3],[4,3]],                           "barres": [{"fromString":6,"toString":1,"fret":1}], "position": 2 },
+
+  "G":    { "fingers": [[6,3],[5,2],[1,3]],                     "barres": [] },
+  "G7":   { "fingers": [[6,3],[5,2],[1,1]],                     "barres": [] },
+  "Gm":   { "fingers": [[5,3],[4,3]],                           "barres": [{"fromString":6,"toString":1,"fret":1}], "position": 3 },
+
+  "H":    { "fingers": [[4,3],[3,3],[2,3]],                     "barres": [{"fromString":5,"toString":1,"fret":1}], "position": 2 },
+  "Hm":   { "fingers": [[4,3],[3,3],[2,2]],                     "barres": [{"fromString":5,"toString":1,"fret":1}], "position": 2 },
+  "H7":   { "fingers": [[5,2],[4,1],[3,2],[1,2],[6,"x"]],       "barres": [] },
+
+  "Ab":   { "fingers": [[5,3],[4,3],[3,2]],                     "barres": [{"fromString":6,"toString":1,"fret":1}], "position": 4 },
+  "Abm":  { "fingers": [[5,3],[4,3]],                           "barres": [{"fromString":6,"toString":1,"fret":1}], "position": 4 }
+}
