@@ -20,6 +20,19 @@ type Tooltip = {
 
 const STORAGE_PREFIX = "songbook:settings:";
 
+// Tooltip ist mit transform: translateX(-50%) zentriert; halbe Breite
+// (Diagramm 110px + 2×8px Padding ≈ 63px) muss vom Viewport-Rand wegbleiben.
+const TOOLTIP_HALF_WIDTH = 63;
+const TOOLTIP_VIEWPORT_MARGIN = 8;
+
+function clampTooltipX(rawX: number): number {
+  if (typeof window === "undefined") return rawX;
+  const min = TOOLTIP_HALF_WIDTH + TOOLTIP_VIEWPORT_MARGIN;
+  const max = window.innerWidth - TOOLTIP_HALF_WIDTH - TOOLTIP_VIEWPORT_MARGIN;
+  if (max < min) return rawX;
+  return Math.min(Math.max(rawX, min), max);
+}
+
 export default function SongView({ song, chordHtml }: Props) {
   const [transpose, setTranspose] = useState(0);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
@@ -83,7 +96,7 @@ export default function SongView({ song, chordHtml }: Props) {
         const rect = div.getBoundingClientRect();
         setTooltip({
           chord: text,
-          x: rect.left + rect.width / 2,
+          x: clampTooltipX(rect.left + rect.width / 2),
           y: rect.bottom + 4,
         });
       };
@@ -99,7 +112,7 @@ export default function SongView({ song, chordHtml }: Props) {
             ? null
             : {
                 chord: text,
-                x: rect.left + rect.width / 2,
+                x: clampTooltipX(rect.left + rect.width / 2),
                 y: rect.bottom + 4,
               },
         );

@@ -1,9 +1,13 @@
 import { notFound } from "next/navigation";
-import { getSongBySlug } from "@/lib/songs";
+import { getAllSongs, getSongBySlug } from "@/lib/songs";
 import { renderChordPro } from "@/lib/renderer";
 import SongView from "@/components/SongView";
 
 type Params = Promise<{ slug: string }>;
+
+export function generateStaticParams() {
+  return getAllSongs().map((song) => ({ slug: song.slug }));
+}
 
 export default async function SongPage(props: { params: Params }) {
   const { slug } = await props.params;
