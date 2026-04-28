@@ -5,6 +5,7 @@ import type { Song } from "@/lib/schema";
 import { transposeChordHtml } from "@/lib/transpose-html";
 import { getChordDiagram } from "@/lib/chords";
 import ChordDiagram from "./ChordDiagram";
+import MetronomePanel from "./MetronomePanel";
 
 type Props = {
   song: Song;
@@ -23,6 +24,18 @@ export default function SongView({ song, chordHtml }: Props) {
   const [transpose, setTranspose] = useState(0);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+
+  // Autoscroll
+  const [autoscrollOn, setAutoscrollOn] = useState(false);
+  const [scrollPxPerBeat, setScrollPxPerBeat] = useState(10);
+  const metronomeBpmRef = useRef(song.bpm ?? 120);
+  const scrollPxPerBeatRef = useRef(scrollPxPerBeat);
+  const rafRef = useRef<number | null>(null);
+  const lastRafTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    scrollPxPerBeatRef.current = scrollPxPerBeat;
+  }, [scrollPxPerBeat]);
 
   const storageKey = `${STORAGE_PREFIX}${song.slug}`;
 
@@ -119,6 +132,55 @@ export default function SongView({ song, chordHtml }: Props) {
     };
   }, [tooltip]);
 
+  // rAF autoscroll loop — reads refs so speed/BPM changes take effect without restarting
+  useEffect(() => {
+    if (!autoscrollOn) {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      lastRafTimeRef.current = null;
+      return;
+    }
+
+    const step = (timestamp: number) => {
+      if (lastRafTimeRef.current !== null) {
+        const dt = timestamp - lastRafTimeRef.current;
+        const pxPerSec = (metronomeBpmRef.current * scrollPxPerBeatRef.current) / 60;
+        window.scrollBy(0, (pxPerSec * dt) / 1000);
+
+        const atBottom =
+          window.scrollY + window.innerHeight >=
+          document.documentElement.scrollHeight - 10;
+        if (atBottom) {
+          setAutoscrollOn(false);
+          return;
+        }
+      }
+      lastRafTimeRef.current = timestamp;
+      rafRef.current = requestAnimationFrame(step);
+    };
+
+    rafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      lastRafTimeRef.current = null;
+    };
+  }, [autoscrollOn]);
+
+  // Spacebar toggles autoscroll; ignored when focus is in an editable field
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        setAutoscrollOn((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   const transposeLabel =
     transpose === 0 ? "±0" : transpose > 0 ? `+${transpose}` : `${transpose}`;
 
@@ -214,6 +276,56 @@ export default function SongView({ song, chordHtml }: Props) {
               ↺ Reset
             </button>
           )}
+        </div>
+
+        <MetronomePanel
+          slug={song.slug}
+          initialBpm={song.bpm ?? 120}
+          initialTimeSig={song.timeSig}
+          onBpmChange={(bpm) => { metronomeBpmRef.current = bpm; }}
+        />
+
+        {/* Autoscroll */}
+        <div className="print:hidden mt-3 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setAutoscrollOn((prev) => !prev)}
+            aria-pressed={autoscrollOn}
+            className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${
+              autoscrollOn
+                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+            }`}
+            aria-label={autoscrollOn ? "Autoscroll stoppen" : "Autoscroll starten"}
+          >
+            {autoscrollOn ? "⏸ Scroll" : "⏬ Scroll"}
+          </button>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setScrollPxPerBeat((p) => Math.max(1, p - 1))}
+              className="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-mono text-gray-800 dark:text-gray-200"
+              aria-label="Langsamer scrollen"
+            >
+              −
+            </button>
+            <span className="text-xs font-mono w-16 text-center tabular-nums text-gray-600 dark:text-gray-400">
+              {scrollPxPerBeat} px/♩
+            </span>
+            <button
+              type="button"
+              onClick={() => setScrollPxPerBeat((p) => Math.min(40, p + 1))}
+              className="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-mono text-gray-800 dark:text-gray-200"
+              aria-label="Schneller scrollen"
+            >
+              +
+            </button>
+          </div>
+
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            Leertaste
+          </span>
         </div>
       </header>
 
