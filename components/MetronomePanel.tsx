@@ -54,7 +54,6 @@ export default function MetronomePanel({
     return () => m.dispose();
   }, []);
 
-  // Hydrate from localStorage. Falls back to props if nothing saved.
   useEffect(() => {
     if (!storageKey) {
       hydratedRef.current = true;
@@ -74,7 +73,6 @@ export default function MetronomePanel({
     hydratedRef.current = true;
   }, [storageKey]);
 
-  // Persist after hydration to avoid clobbering saved values with defaults.
   useEffect(() => {
     if (!storageKey || !hydratedRef.current) return;
     try {
@@ -136,10 +134,14 @@ export default function MetronomePanel({
 
   const beatCount = BEATS[timeSig];
 
+  // Wiederverwendete Klassen
+  const buttonBase =
+    "rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] font-mono text-[var(--text)] transition-colors";
+
   return (
-    <div className="print:hidden mt-4 border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-gray-50 dark:bg-gray-900/40">
+    <div className="print:hidden mt-4 border border-[var(--border)] rounded-xl p-3 bg-[var(--surface)]">
+      {/* Zeile 1: Beat-Anzeige + BPM + Tap (auf Mobile umbruchsfähig) */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Beat dots */}
         <div className="flex gap-1.5" role="status" aria-label="Taktanzeige">
           {Array.from({ length: beatCount }, (_, i) => (
             <span
@@ -148,20 +150,19 @@ export default function MetronomePanel({
               className={`block w-4 h-4 rounded-full border-2 transition-colors duration-75 ${
                 activeBeat === i
                   ? i === 0
-                    ? "bg-blue-500 border-blue-500"
-                    : "bg-emerald-400 border-emerald-400"
-                  : "border-gray-300 dark:border-gray-600"
+                    ? "bg-[var(--amber-bright)] border-[var(--amber-bright)]"
+                    : "bg-[var(--teal)] border-[var(--teal)]"
+                  : "border-[var(--border)]"
               }`}
             />
           ))}
         </div>
 
-        {/* BPM controls */}
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => adjustBpm(-5)}
-            className="w-8 h-7 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-xs font-mono text-gray-800 dark:text-gray-200"
+            className={`${buttonBase} w-8 h-7 text-xs`}
             aria-label="5 BPM langsamer"
           >
             −5
@@ -169,7 +170,7 @@ export default function MetronomePanel({
           <button
             type="button"
             onClick={() => adjustBpm(-1)}
-            className="w-6 h-7 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-mono text-gray-800 dark:text-gray-200"
+            className={`${buttonBase} w-6 h-7 text-sm`}
             aria-label="1 BPM langsamer"
           >
             −
@@ -183,13 +184,13 @@ export default function MetronomePanel({
               const v = parseInt(e.target.value, 10);
               if (Number.isFinite(v)) setBpm(clampBpm(v));
             }}
-            className="w-14 text-center font-mono text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 text-gray-900 dark:text-white"
+            className="w-14 text-center font-mono tabular-nums text-sm bg-[var(--bg)] border border-[var(--border)] rounded px-1 py-0.5 text-[var(--text)]"
             aria-label="BPM"
           />
           <button
             type="button"
             onClick={() => adjustBpm(1)}
-            className="w-6 h-7 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-mono text-gray-800 dark:text-gray-200"
+            className={`${buttonBase} w-6 h-7 text-sm`}
             aria-label="1 BPM schneller"
           >
             +
@@ -197,60 +198,68 @@ export default function MetronomePanel({
           <button
             type="button"
             onClick={() => adjustBpm(5)}
-            className="w-8 h-7 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-xs font-mono text-gray-800 dark:text-gray-200"
+            className={`${buttonBase} w-8 h-7 text-xs`}
             aria-label="5 BPM schneller"
           >
             +5
           </button>
-          <span className="text-xs text-gray-500 dark:text-gray-400 ml-0.5">
+          <span className="text-xs uppercase tracking-wider text-[var(--text-faint)] ml-1">
             BPM
           </span>
         </div>
 
-        {/* Tap Tempo */}
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleTap}
-            className="px-3 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 text-sm font-semibold"
+            className="px-3 py-1 rounded-lg border text-sm font-semibold transition-colors"
+            style={{
+              background: "var(--amber-tint)",
+              borderColor: "var(--border)",
+              color: "var(--amber-bright)",
+            }}
             aria-label="Tap Tempo"
           >
             Tap
           </button>
           {tapHint && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
+            <span className="text-xs text-[var(--text-faint)] tabular-nums">
               {tapHint}
             </span>
           )}
         </div>
+      </div>
 
-        {/* Time signature */}
+      {/* Zeile 2: Taktart + Start (eigene Reihe → mehr Luft auf Mobile) */}
+      <div className="flex flex-wrap items-center gap-2 mt-2">
         <div className="flex gap-1" role="group" aria-label="Taktart">
-          {(["4/4", "3/4", "6/8"] as const).map((ts) => (
-            <button
-              key={ts}
-              type="button"
-              onClick={() => setTimeSig(ts)}
-              aria-pressed={timeSig === ts}
-              className={`px-2.5 py-0.5 rounded text-sm font-mono ${
-                timeSig === ts
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-              }`}
-            >
-              {ts}
-            </button>
-          ))}
+          {(["4/4", "3/4", "6/8"] as const).map((ts) => {
+            const active = timeSig === ts;
+            return (
+              <button
+                key={ts}
+                type="button"
+                onClick={() => setTimeSig(ts)}
+                aria-pressed={active}
+                className={`px-2.5 py-0.5 rounded text-sm font-mono border transition-colors ${
+                  active
+                    ? "bg-[var(--teal-tint)] border-[var(--teal)] text-[var(--teal)]"
+                    : "bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
+                }`}
+              >
+                {ts}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Start / Stop */}
         <button
           type="button"
           onClick={togglePlay}
           className={`px-4 py-1 rounded-lg text-sm font-semibold transition-colors ${
             isPlaying
               ? "bg-red-500 hover:bg-red-600 text-white"
-              : "bg-blue-500 hover:bg-blue-600 text-white"
+              : "bg-[var(--teal)] hover:opacity-90 text-white"
           }`}
           aria-label={isPlaying ? "Metronom stoppen" : "Metronom starten"}
         >

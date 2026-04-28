@@ -5,14 +5,22 @@ export default function Home() {
   const songs = getAllSongs();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
-      <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Gitarren-Songbook
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-          {songs.length} {songs.length === 1 ? "Song" : "Songs"}
-        </p>
+    <div className="min-h-screen">
+      <header className="border-b border-[var(--border)] py-5 px-6 flex items-baseline justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-[var(--text)]">
+            Gitarren-Songbook
+          </h1>
+          <p className="text-[var(--text-muted)] text-sm mt-1">
+            {songs.length} {songs.length === 1 ? "Song" : "Songs"}
+          </p>
+        </div>
+        <a
+          href="/import"
+          className="text-sm text-[var(--teal)] hover:opacity-80 transition-opacity shrink-0"
+        >
+          + Importer
+        </a>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">

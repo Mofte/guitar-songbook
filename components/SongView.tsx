@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { Song } from "@/lib/schema";
 import { transposeChordHtml } from "@/lib/transpose-html";
 import { getChordDiagram } from "@/lib/chords";
+import { extractUniqueChords } from "@/lib/extract-chords";
 import ChordDiagram from "./ChordDiagram";
+import ChordOverview from "./ChordOverview";
 import MetronomePanel from "./MetronomePanel";
 
 type Props = {
@@ -19,6 +21,19 @@ type Tooltip = {
 };
 
 const STORAGE_PREFIX = "songbook:settings:";
+
+// Tooltip ist mit transform: translateX(-50%) zentriert; halbe Breite
+// (Diagramm 110px + 2×8px Padding ≈ 63px) muss vom Viewport-Rand wegbleiben.
+const TOOLTIP_HALF_WIDTH = 63;
+const TOOLTIP_VIEWPORT_MARGIN = 8;
+
+function clampTooltipX(rawX: number): number {
+  if (typeof window === "undefined") return rawX;
+  const min = TOOLTIP_HALF_WIDTH + TOOLTIP_VIEWPORT_MARGIN;
+  const max = window.innerWidth - TOOLTIP_HALF_WIDTH - TOOLTIP_VIEWPORT_MARGIN;
+  if (max < min) return rawX;
+  return Math.min(Math.max(rawX, min), max);
+}
 
 export default function SongView({ song, chordHtml }: Props) {
   const [transpose, setTranspose] = useState(0);
@@ -65,6 +80,13 @@ export default function SongView({ song, chordHtml }: Props) {
     [chordHtml, transpose],
   );
 
+  // Einzigartige Akkorde aus dem aktuell gerenderten (transponierten) HTML
+  // ableiten — aktualisiert sich automatisch bei Transpose.
+  const uniqueChords = useMemo(
+    () => extractUniqueChords(transposedHtml),
+    [transposedHtml],
+  );
+
   // Attach hover/tap listeners to all .chord divs after each render
   useEffect(() => {
     const el = sheetRef.current;
@@ -83,7 +105,7 @@ export default function SongView({ song, chordHtml }: Props) {
         const rect = div.getBoundingClientRect();
         setTooltip({
           chord: text,
-          x: rect.left + rect.width / 2,
+          x: clampTooltipX(rect.left + rect.width / 2),
           y: rect.bottom + 4,
         });
       };
@@ -99,7 +121,7 @@ export default function SongView({ song, chordHtml }: Props) {
             ? null
             : {
                 chord: text,
-                x: rect.left + rect.width / 2,
+                x: clampTooltipX(rect.left + rect.width / 2),
                 y: rect.bottom + 4,
               },
         );
@@ -188,37 +210,49 @@ export default function SongView({ song, chordHtml }: Props) {
 
   return (
     <article className="max-w-3xl mx-auto px-4 py-6">
-      <header className="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <header className="mb-6 border-b border-[var(--border)] pb-4">
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-[var(--text)]">
           {song.title}
         </h1>
         {song.artist && (
-          <p className="text-gray-500 dark:text-gray-400 mt-1">{song.artist}</p>
+          <p className="font-display italic text-[var(--text-muted)] text-lg mt-0.5">
+            {song.artist}
+          </p>
         )}
 
-        <div className="flex flex-wrap gap-3 mt-3 text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex flex-wrap gap-1.5 mt-3 items-center">
           {song.capo > 0 && (
-            <span className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
+            <span
+              className="text-xs font-mono px-1.5 py-0.5 rounded"
+              style={{
+                background: "var(--amber-tint)",
+                color: "var(--amber-bright)",
+                border: "1px solid var(--border)",
+              }}
+            >
               Capo {song.capo}
             </span>
           )}
+          {song.key && (
+            <span className="font-display italic text-sm text-[var(--text)] px-1.5 py-0 rounded border border-[var(--border)] bg-[var(--surface)]">
+              {song.key}
+            </span>
+          )}
           {song.bpm && (
-            <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+            <span className="text-xs font-mono tabular-nums px-1.5 py-0.5 rounded text-[var(--text-muted)] border border-[var(--border)] bg-[var(--surface)]">
               {song.bpm} BPM
             </span>
           )}
           {song.timeSig && (
-            <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+            <span className="text-xs font-mono tabular-nums px-1.5 py-0.5 rounded text-[var(--text-muted)] border border-[var(--border)] bg-[var(--surface)]">
               {song.timeSig}
             </span>
           )}
-          {song.key && (
-            <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-              {song.key}
-            </span>
-          )}
           {song.stars && (
-            <span className="text-amber-500" aria-label={`${song.stars} Sterne`}>
+            <span
+              className="text-amber-400 dark:text-amber-300 text-sm ml-1 tracking-tight"
+              aria-label={`${song.stars} Sterne`}
+            >
               {"★".repeat(song.stars)}
               {"☆".repeat(5 - song.stars)}
             </span>
@@ -226,11 +260,11 @@ export default function SongView({ song, chordHtml }: Props) {
         </div>
 
         {song.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
+          <div className="flex flex-wrap gap-1.5 mt-2">
             {song.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full"
+                className="text-xs px-2 py-0.5 rounded-full text-[var(--text-faint)] border border-[var(--border)] bg-transparent tracking-wide"
               >
                 {tag}
               </span>
@@ -239,13 +273,13 @@ export default function SongView({ song, chordHtml }: Props) {
         )}
 
         <div className="flex items-center gap-2 mt-4 print:hidden">
-          <span className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mr-1">
+          <span className="text-xs uppercase tracking-wider text-[var(--text-faint)] mr-1">
             Transpose
           </span>
           <button
             type="button"
             onClick={() => setTranspose((t) => t - 1)}
-            className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-mono"
+            className="w-8 h-8 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
             aria-label="Einen Halbton tiefer"
           >
             −
@@ -253,8 +287,8 @@ export default function SongView({ song, chordHtml }: Props) {
           <span
             className={`min-w-[3.5rem] text-center font-mono text-sm tabular-nums ${
               transpose === 0
-                ? "text-gray-500 dark:text-gray-400"
-                : "text-blue-600 dark:text-blue-400 font-bold"
+                ? "text-[var(--text-faint)]"
+                : "text-[var(--amber-bright)] font-bold"
             }`}
           >
             {transposeLabel}
@@ -262,7 +296,7 @@ export default function SongView({ song, chordHtml }: Props) {
           <button
             type="button"
             onClick={() => setTranspose((t) => t + 1)}
-            className="w-8 h-8 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-mono"
+            className="w-8 h-8 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
             aria-label="Einen Halbton höher"
           >
             +
@@ -271,7 +305,7 @@ export default function SongView({ song, chordHtml }: Props) {
             <button
               type="button"
               onClick={() => setTranspose(0)}
-              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2"
+              className="text-xs text-[var(--text-faint)] hover:text-[var(--text)] px-2 transition-colors"
             >
               ↺ Reset
             </button>
@@ -291,10 +325,10 @@ export default function SongView({ song, chordHtml }: Props) {
             type="button"
             onClick={() => setAutoscrollOn((prev) => !prev)}
             aria-pressed={autoscrollOn}
-            className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors ${
+            className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors border ${
               autoscrollOn
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                ? "bg-[var(--teal-tint)] border-[var(--teal)] text-[var(--teal)]"
+                : "bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
             }`}
             aria-label={autoscrollOn ? "Autoscroll stoppen" : "Autoscroll starten"}
           >
@@ -302,32 +336,37 @@ export default function SongView({ song, chordHtml }: Props) {
           </button>
 
           <div className="flex items-center gap-1">
+            <span className="text-xs uppercase tracking-wider text-[var(--text-faint)] mr-1">
+              Speed
+            </span>
             <button
               type="button"
               onClick={() => setScrollPxPerBeat((p) => Math.max(1, p - 1))}
-              className="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-mono text-gray-800 dark:text-gray-200"
+              className="w-6 h-6 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
               aria-label="Langsamer scrollen"
             >
               −
             </button>
-            <span className="text-xs font-mono w-16 text-center tabular-nums text-gray-600 dark:text-gray-400">
-              {scrollPxPerBeat} px/♩
+            <span className="text-xs font-mono w-8 text-center tabular-nums text-[var(--text-muted)]">
+              {scrollPxPerBeat}
             </span>
             <button
               type="button"
               onClick={() => setScrollPxPerBeat((p) => Math.min(40, p + 1))}
-              className="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm font-mono text-gray-800 dark:text-gray-200"
+              className="w-6 h-6 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
               aria-label="Schneller scrollen"
             >
               +
             </button>
           </div>
 
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            Leertaste
+          <span className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
+            <kbd className="shortcut">Space</kbd>
           </span>
         </div>
       </header>
+
+      <ChordOverview chords={uniqueChords} />
 
       <div
         ref={sheetRef}
