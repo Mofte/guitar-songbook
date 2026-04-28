@@ -1,4 +1,9 @@
+import { getAllSongs } from "@/lib/songs";
+import SongList from "@/components/SongList";
+
 export default function Home() {
+  const songs = getAllSongs();
+
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6">
@@ -6,16 +11,12 @@ export default function Home() {
           Gitarren-Songbook
         </h1>
         <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-          Persönliches Songbook zum Gitarrelernen
+          {songs.length} {songs.length === 1 ? "Song" : "Songs"}
         </p>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">
-        <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">
-            Songs werden hier angezeigt...
-          </p>
-        </div>
+        <SongList songs={songs} />
       </main>
     </div>
   );
