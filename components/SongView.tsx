@@ -5,6 +5,7 @@ import type { Song } from "@/lib/schema";
 import { transposeChordHtml } from "@/lib/transpose-html";
 import { getChordDiagram } from "@/lib/chords";
 import ChordDiagram from "./ChordDiagram";
+import MetronomePanel from "./MetronomePanel";
 
 type Props = {
   song: Song;
@@ -215,6 +216,11 @@ export default function SongView({ song, chordHtml }: Props) {
             </button>
           )}
         </div>
+
+        <MetronomePanel
+          initialBpm={song.bpm ?? 120}
+          initialTimeSig={song.timeSig}
+        />
       </header>
 
       <div
