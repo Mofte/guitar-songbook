@@ -26,12 +26,14 @@ type Props = {
   slug?: string;
   initialBpm?: number;
   initialTimeSig?: string;
+  onBpmChange?: (bpm: number) => void;
 };
 
 export default function MetronomePanel({
   slug,
   initialBpm = 120,
   initialTimeSig = "4/4",
+  onBpmChange,
 }: Props) {
   const metronomeRef = useRef<Metronome | null>(null);
   const tapTimesRef = useRef<number[]>([]);
@@ -84,7 +86,8 @@ export default function MetronomePanel({
 
   useEffect(() => {
     metronomeRef.current?.setBpm(bpm);
-  }, [bpm]);
+    onBpmChange?.(bpm);
+  }, [bpm, onBpmChange]);
 
   useEffect(() => {
     metronomeRef.current?.setTimeSignature(BEATS[timeSig]);
