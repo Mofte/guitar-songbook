@@ -15,7 +15,7 @@ export default async function SongPage(props: { params: Params }) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
-      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-3">
+      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-3 print:hidden">
         <a
           href="/"
           className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
