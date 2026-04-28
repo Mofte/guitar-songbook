@@ -134,7 +134,7 @@ export default function MetronomePanel({
 
   const beatCount = BEATS[timeSig];
 
-  // Wiederverwendete Klassen
+  // Wiederverwendete Klassen — Buttons mind. 36×36px für Touch-Targets
   const buttonBase =
     "rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] font-mono text-[var(--text)] transition-colors";
 
@@ -162,7 +162,7 @@ export default function MetronomePanel({
           <button
             type="button"
             onClick={() => adjustBpm(-5)}
-            className={`${buttonBase} w-8 h-7 text-xs`}
+            className={`${buttonBase} w-9 h-9 text-xs`}
             aria-label="5 BPM langsamer"
           >
             −5
@@ -170,7 +170,7 @@ export default function MetronomePanel({
           <button
             type="button"
             onClick={() => adjustBpm(-1)}
-            className={`${buttonBase} w-6 h-7 text-sm`}
+            className={`${buttonBase} w-8 h-9 text-base`}
             aria-label="1 BPM langsamer"
           >
             −
@@ -184,13 +184,13 @@ export default function MetronomePanel({
               const v = parseInt(e.target.value, 10);
               if (Number.isFinite(v)) setBpm(clampBpm(v));
             }}
-            className="w-14 text-center font-mono tabular-nums text-sm bg-[var(--bg)] border border-[var(--border)] rounded px-1 py-0.5 text-[var(--text)]"
+            className="w-14 h-9 text-center font-mono tabular-nums text-sm bg-[var(--bg)] border border-[var(--border)] rounded px-1 text-[var(--text)]"
             aria-label="BPM"
           />
           <button
             type="button"
             onClick={() => adjustBpm(1)}
-            className={`${buttonBase} w-6 h-7 text-sm`}
+            className={`${buttonBase} w-8 h-9 text-base`}
             aria-label="1 BPM schneller"
           >
             +
@@ -198,7 +198,7 @@ export default function MetronomePanel({
           <button
             type="button"
             onClick={() => adjustBpm(5)}
-            className={`${buttonBase} w-8 h-7 text-xs`}
+            className={`${buttonBase} w-9 h-9 text-xs`}
             aria-label="5 BPM schneller"
           >
             +5
@@ -212,7 +212,7 @@ export default function MetronomePanel({
           <button
             type="button"
             onClick={handleTap}
-            className="px-3 py-1 rounded-lg border text-sm font-semibold transition-colors"
+            className="px-4 h-9 rounded-lg border text-sm font-semibold transition-colors"
             style={{
               background: "var(--amber-tint)",
               borderColor: "var(--border)",
@@ -241,7 +241,7 @@ export default function MetronomePanel({
                 type="button"
                 onClick={() => setTimeSig(ts)}
                 aria-pressed={active}
-                className={`px-2.5 py-0.5 rounded text-sm font-mono border transition-colors ${
+                className={`px-3 h-9 rounded text-sm font-mono border transition-colors ${
                   active
                     ? "bg-[var(--teal-tint)] border-[var(--teal)] text-[var(--teal)]"
                     : "bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
@@ -256,7 +256,7 @@ export default function MetronomePanel({
         <button
           type="button"
           onClick={togglePlay}
-          className={`px-4 py-1 rounded-lg text-sm font-semibold transition-colors ${
+          className={`px-5 h-9 rounded-lg text-sm font-semibold transition-colors ${
             isPlaying
               ? "bg-red-500 hover:bg-red-600 text-white"
               : "bg-[var(--teal)] hover:opacity-90 text-white"
