@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import type { Song } from "@/lib/schema";
 import { transposeChordHtml } from "@/lib/transpose-html";
 import { getChordDiagram } from "@/lib/chords";
+import { extractUniqueChords } from "@/lib/extract-chords";
 import ChordDiagram from "./ChordDiagram";
+import ChordOverview from "./ChordOverview";
 import MetronomePanel from "./MetronomePanel";
 
 type Props = {
@@ -76,6 +78,13 @@ export default function SongView({ song, chordHtml }: Props) {
   const transposedHtml = useMemo(
     () => transposeChordHtml(chordHtml, transpose),
     [chordHtml, transpose],
+  );
+
+  // Einzigartige Akkorde aus dem aktuell gerenderten (transponierten) HTML
+  // ableiten — aktualisiert sich automatisch bei Transpose.
+  const uniqueChords = useMemo(
+    () => extractUniqueChords(transposedHtml),
+    [transposedHtml],
   );
 
   // Attach hover/tap listeners to all .chord divs after each render
@@ -356,6 +365,8 @@ export default function SongView({ song, chordHtml }: Props) {
           </span>
         </div>
       </header>
+
+      <ChordOverview chords={uniqueChords} />
 
       <div
         ref={sheetRef}
