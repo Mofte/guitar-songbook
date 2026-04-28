@@ -24,3 +24,80 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* chordsheetjs HtmlDivFormatter styles */
+.chord-sheet {
+  font-family: var(--font-mono, monospace);
+  line-height: 1;
+}
+
+.chord-sheet .paragraph {
+  margin-bottom: 1.5rem;
+}
+
+.chord-sheet h3.label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.chord-sheet .paragraph.chorus h3.label {
+  color: #3b82f6;
+}
+
+.chord-sheet .paragraph.bridge h3.label {
+  color: #8b5cf6;
+}
+
+.chord-sheet .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 0.125rem;
+}
+
+.chord-sheet .column {
+  display: flex;
+  flex-direction: column;
+  margin-right: 0.1em;
+}
+
+.chord-sheet .chord {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2563eb;
+  min-height: 1.2em;
+  white-space: pre;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chord-sheet .chord {
+    color: #60a5fa;
+  }
+
+  .chord-sheet h3.label {
+    color: #9ca3af;
+  }
+
+  .chord-sheet .paragraph.chorus h3.label {
+    color: #93c5fd;
+  }
+
+  .chord-sheet .paragraph.bridge h3.label {
+    color: #c4b5fd;
+  }
+}
+
+.chord-sheet .lyrics {
+  font-size: 1rem;
+  white-space: pre;
+}
+
+@media print {
+  .chord-sheet .paragraph {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+}
