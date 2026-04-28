@@ -24,3 +24,179 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* chordsheetjs HtmlDivFormatter styles */
+.chord-sheet {
+  font-family: var(--font-mono, monospace);
+  line-height: 1;
+}
+
+.chord-sheet .paragraph {
+  margin-bottom: 1.5rem;
+}
+
+.chord-sheet h3.label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.chord-sheet .paragraph.chorus h3.label {
+  color: #3b82f6;
+}
+
+.chord-sheet .paragraph.bridge h3.label {
+  color: #8b5cf6;
+}
+
+.chord-sheet .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 0.125rem;
+}
+
+.chord-sheet .column {
+  display: flex;
+  flex-direction: column;
+  margin-right: 0.1em;
+}
+
+.chord-sheet .chord {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2563eb;
+  min-height: 1.2em;
+  white-space: pre;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chord-sheet .chord {
+    color: #60a5fa;
+  }
+
+  .chord-sheet h3.label {
+    color: #9ca3af;
+  }
+
+  .chord-sheet .paragraph.chorus h3.label {
+    color: #93c5fd;
+  }
+
+  .chord-sheet .paragraph.bridge h3.label {
+    color: #c4b5fd;
+  }
+}
+
+.chord-sheet .lyrics {
+  font-size: 1rem;
+  white-space: pre;
+}
+
+@media print {
+  /* Seite: A4, minimale Ränder */
+  @page {
+    margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+    size: A4;
+  }
+
+  /* Alles weiß auf schwarz, kein Hintergrund */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  /* Keine Bildschirm-Artefakte */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Chord-Sheet kompakt */
+  .chord-sheet {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    line-height: 1;
+  }
+
+  .chord-sheet .paragraph {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 0.8rem;
+  }
+
+  /* Neue Seite nie mitten in Verse/Chorus */
+  .chord-sheet .paragraph.verse,
+  .chord-sheet .paragraph.chorus,
+  .chord-sheet .paragraph.bridge {
+    break-inside: avoid;
+  }
+
+  /* Akkorde schwarz statt blau, kompakter */
+  .chord-sheet .chord {
+    color: black !important;
+    font-size: 7.5pt;
+    font-weight: 700;
+    min-height: 1em;
+    white-space: pre;
+  }
+
+  /* Lyrics etwas kompakter */
+  .chord-sheet .lyrics {
+    font-size: 9pt;
+    white-space: pre;
+  }
+
+  /* Sektionslabels schwarz, kleiner */
+  .chord-sheet h3.label {
+    color: black !important;
+    font-size: 6.5pt;
+    margin-bottom: 0.3rem;
+  }
+
+  /* Chord-Zeilen nicht umbrechen */
+  .chord-sheet .row {
+    flex-wrap: nowrap;
+    margin-bottom: 0;
+  }
+
+  /* Spaltenabstand minimal */
+  .chord-sheet .column {
+    margin-right: 0.05em;
+  }
+
+  /* Song-Titel-Bereich kompakt */
+  article header {
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 0.5pt solid #999;
+  }
+
+  /* Tags und Sterne ausblenden — sparen Platz */
+  article header .flex.flex-wrap.gap-1 {
+    display: none;
+  }
+
+  /* Keine Schatten, keine Rounded Corners */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Metadaten-Chips schwarz umrandet */
+  article header span {
+    background: transparent !important;
+    border: 0.5pt solid #666;
+    color: black !important;
+  }
+
+  /* Links als Text anzeigen */
+  a {
+    text-decoration: none;
+    color: black !important;
+  }
+}

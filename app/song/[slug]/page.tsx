@@ -1,29 +1,29 @@
+import { notFound } from "next/navigation";
+import { getSongBySlug } from "@/lib/songs";
+import { renderChordPro } from "@/lib/renderer";
+import SongView from "@/components/SongView";
+
 type Params = Promise<{ slug: string }>;
 
 export default async function SongPage(props: { params: Params }) {
   const { slug } = await props.params;
+  const song = getSongBySlug(slug);
+
+  if (!song) notFound();
+
+  const chordHtml = renderChordPro(song.content);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
-      <header className="border-b border-gray-200 dark:border-gray-800 py-4 px-6">
+      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-3 print:hidden">
         <a
           href="/"
-          className="text-blue-600 dark:text-blue-400 hover:underline text-sm mb-4 inline-block"
+          className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
         >
-          ← Zurück
+          ← Alle Songs
         </a>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Song: {slug}
-        </h1>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">
-            Song-Renderer kommt in Phase 3...
-          </p>
-        </div>
-      </main>
+      </nav>
+      <SongView song={song} chordHtml={chordHtml} />
     </div>
   );
 }
