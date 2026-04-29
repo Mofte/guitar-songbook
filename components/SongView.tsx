@@ -62,6 +62,11 @@ export default function SongView({ song, chordHtml }: Props) {
       if (typeof data.transpose === "number") {
         setTranspose(data.transpose);
       }
+      if (typeof data.scrollPxPerBeat === "number") {
+        setScrollPxPerBeat(
+          Math.max(1, Math.min(40, Math.round(data.scrollPxPerBeat))),
+        );
+      }
     } catch {
       // corrupt entry → ignore
     }
@@ -69,11 +74,14 @@ export default function SongView({ song, chordHtml }: Props) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(storageKey, JSON.stringify({ transpose }));
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ transpose, scrollPxPerBeat }),
+      );
     } catch {
       // quota exceeded etc. → ignore
     }
-  }, [storageKey, transpose]);
+  }, [storageKey, transpose, scrollPxPerBeat]);
 
   const transposedHtml = useMemo(
     () => transposeChordHtml(chordHtml, transpose),
@@ -279,7 +287,7 @@ export default function SongView({ song, chordHtml }: Props) {
           <button
             type="button"
             onClick={() => setTranspose((t) => t - 1)}
-            className="w-8 h-8 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
+            className="w-9 h-9 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono text-base transition-colors"
             aria-label="Einen Halbton tiefer"
           >
             −
@@ -296,7 +304,7 @@ export default function SongView({ song, chordHtml }: Props) {
           <button
             type="button"
             onClick={() => setTranspose((t) => t + 1)}
-            className="w-8 h-8 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
+            className="w-9 h-9 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono text-base transition-colors"
             aria-label="Einen Halbton höher"
           >
             +
@@ -325,7 +333,7 @@ export default function SongView({ song, chordHtml }: Props) {
             type="button"
             onClick={() => setAutoscrollOn((prev) => !prev)}
             aria-pressed={autoscrollOn}
-            className={`px-3 py-1 rounded-lg text-sm font-semibold transition-colors border ${
+            className={`px-4 h-9 rounded-lg text-sm font-semibold transition-colors border ${
               autoscrollOn
                 ? "bg-[var(--teal-tint)] border-[var(--teal)] text-[var(--teal)]"
                 : "bg-[var(--surface-2)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
@@ -342,18 +350,18 @@ export default function SongView({ song, chordHtml }: Props) {
             <button
               type="button"
               onClick={() => setScrollPxPerBeat((p) => Math.max(1, p - 1))}
-              className="w-6 h-6 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
+              className="w-9 h-9 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono text-base transition-colors"
               aria-label="Langsamer scrollen"
             >
               −
             </button>
-            <span className="text-xs font-mono w-8 text-center tabular-nums text-[var(--text-muted)]">
+            <span className="text-sm font-mono w-8 text-center tabular-nums text-[var(--text-muted)]">
               {scrollPxPerBeat}
             </span>
             <button
               type="button"
               onClick={() => setScrollPxPerBeat((p) => Math.min(40, p + 1))}
-              className="w-6 h-6 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono transition-colors"
+              className="w-9 h-9 rounded bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] font-mono text-base transition-colors"
               aria-label="Schneller scrollen"
             >
               +
