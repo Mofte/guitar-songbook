@@ -15,10 +15,28 @@ function fileToSlug(filename: string): string {
   return filename.replace(/\.cho$/, "");
 }
 
+/**
+ * YAML interpretiert leere Felder (`bpm:`, `key:`) als `null`. Zod's
+ * `.optional()` akzeptiert nur `undefined`; ohne Stripping würde
+ * jeder Song mit leerem Optional-Feld die Validierung sprengen.
+ * Defaults (`.default(...)`) greifen ebenfalls erst bei `undefined`,
+ * deshalb hier proaktiv null-Felder entfernen.
+ */
+function stripNullValues(
+  obj: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== null) out[key] = value;
+  }
+  return out;
+}
+
 function parseSongFile(filepath: string, slug: string): Song {
   const raw = fs.readFileSync(filepath, "utf-8");
   const { data, content } = matter(raw);
-  const frontmatter = SongFrontmatterSchema.parse(data);
+  const cleaned = stripNullValues(data as Record<string, unknown>);
+  const frontmatter = SongFrontmatterSchema.parse(cleaned);
   return { ...frontmatter, slug, content: content.trim() };
 }
 
