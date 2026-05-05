@@ -18,6 +18,13 @@ type Tooltip = {
   chord: string;
   x: number;
   y: number;
+  /**
+   * Hover-Tooltips schließen über mouseleave; geklickte Tooltips bleiben
+   * "pinned" und schließen nur durch Klick außerhalb. Nur Pinned-Mode
+   * attached doc-Listener, sonst stört der scroll-listener das Hovern
+   * (Reflow durch Tooltip-Render → scroll-event → close).
+   */
+  pinned: boolean;
 };
 
 const STORAGE_PREFIX = "songbook:settings:";
@@ -39,6 +46,7 @@ export default function SongView({ song, chordHtml }: Props) {
   const [transpose, setTranspose] = useState(0);
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   // Autoscroll
   const [autoscrollOn, setAutoscrollOn] = useState(false);
@@ -111,26 +119,36 @@ export default function SongView({ song, chordHtml }: Props) {
 
       const show = () => {
         const rect = div.getBoundingClientRect();
-        setTooltip({
-          chord: text,
-          x: clampTooltipX(rect.left + rect.width / 2),
-          y: rect.bottom + 4,
-        });
+        // Während ein Tooltip "pinned" ist (per Klick), übergehen wir
+        // Hover-Updates — sonst flackert der pinned-state weg.
+        setTooltip((prev) =>
+          prev?.pinned
+            ? prev
+            : {
+                chord: text,
+                x: clampTooltipX(rect.left + rect.width / 2),
+                y: rect.bottom + 4,
+                pinned: false,
+              },
+        );
       };
 
-      const hide = () => setTooltip(null);
+      const hide = () => {
+        setTooltip((prev) => (prev?.pinned ? prev : null));
+      };
 
       const toggle = (e: Event) => {
         e.preventDefault();
         e.stopPropagation();
         const rect = div.getBoundingClientRect();
         setTooltip((prev) =>
-          prev?.chord === text
+          prev?.chord === text && prev.pinned
             ? null
             : {
                 chord: text,
                 x: clampTooltipX(rect.left + rect.width / 2),
                 y: rect.bottom + 4,
+                pinned: true,
               },
         );
       };
@@ -150,17 +168,22 @@ export default function SongView({ song, chordHtml }: Props) {
     return () => cleanups.forEach((fn) => fn());
   }, [transposedHtml]);
 
-  // Close tooltip when clicking outside
+  // Outside-pointerdown schließt nur PINNED tooltips. Hover-Tooltips
+  // schließen ausschließlich über mouseleave; ein scroll- oder
+  // click-Listener würde sonst das Hovern stören (Reflow beim
+  // Tooltip-Render kann scroll-events triggern).
   useEffect(() => {
-    if (!tooltip) return;
-    const close = () => setTooltip(null);
-    window.addEventListener("scroll", close, { passive: true });
-    document.addEventListener("click", close);
-    return () => {
-      window.removeEventListener("scroll", close);
-      document.removeEventListener("click", close);
+    if (!tooltip?.pinned) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (sheetRef.current?.contains(target)) return;
+      if (tooltipRef.current?.contains(target)) return;
+      setTooltip(null);
     };
-  }, [tooltip]);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [tooltip?.pinned]);
 
   // rAF autoscroll loop — reads refs so speed/BPM changes take effect without restarting
   useEffect(() => {
@@ -384,12 +407,16 @@ export default function SongView({ song, chordHtml }: Props) {
 
       {tooltip && tooltipData && (
         <div
+          ref={tooltipRef}
           role="tooltip"
           className="fixed z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 print:hidden"
           style={{
             left: `${tooltip.x}px`,
             top: `${tooltip.y}px`,
             transform: "translateX(-50%)",
+            // Hover-Tooltips dürfen Mausevents nicht stehlen (sonst feuert
+            // mouseleave auf dem chord, sobald das Tooltip darunter erscheint).
+            // Pinned Tooltips bleiben sowieso, also auch hier irrelevant.
             pointerEvents: "none",
           }}
         >
